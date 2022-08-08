@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  master-db:
+    container_name: master-db
+    image: postgres:12-alpine
+    volumes:
+      - ./master-postgres.conf:/etc/postgresql/postgresql.conf
+      - ./master-pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./master-init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf -c hba_file=/etc/postgresql/pg_hba.conf
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    networks:
+      db-network:
+        ipv4_address: 172.24.2.1
+
+  slave-db:
+    container_name: slave-db
+    image: postgres:12-alpine
+    volumes:
+      - ./slave-init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    depends_on:
+      master-db:
+        condition: service_started
+    networks:
+      db-network:
+        ipv4_address: 172.24.2.2
+
+networks:
+  db-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.24.2.0/16"

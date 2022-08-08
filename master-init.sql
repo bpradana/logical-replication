@@ -1,0 +1,10 @@
+\c postgres
+CREATE TABLE test_table
+(
+    id SERIAL,
+    name VARCHAR(255)
+);
+CREATE ROLE slave WITH REPLICATION LOGIN PASSWORD 'postgres';
+GRANT ALL PRIVILEGES ON DATABASE postgres TO slave;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO slave;
+CREATE PUBLICATION master_publication FOR TABLE test_table;
